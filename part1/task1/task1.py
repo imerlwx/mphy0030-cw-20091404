@@ -62,14 +62,18 @@ data = scio.loadmat(dataFile)
 a, b = simple_image_write(data)
 intensity, vox_dimension = simple_image_read('./data/image.sim', a, b)    
 
+# plot three images at different z-coodinates
 fig = plt.figure()
 ax1 = fig.add_subplot(131)
 ax1.imshow(intensity[:, :, 5], cmap = plt.cm.gray)
+plt.title('z = 5')
 
 ax2 = fig.add_subplot(132)
 ax2.imshow(intensity[:, :, 15], cmap = plt.cm.gray)
+plt.title('z = 15')
 
 ax2 = fig.add_subplot(133)
 ax2.imshow(intensity[:, :, 25], cmap = plt.cm.gray)
+plt.title('z = 25')
 
 plt.show()
