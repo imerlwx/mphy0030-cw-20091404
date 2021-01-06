@@ -34,7 +34,7 @@ triangles = np.genfromtxt('./data/example_triangles.csv',delimiter=',') - 1
 
 # set up parameters
 lambda1 = 0.9
-mu = -1.02
+mu = -1.02 * lambda1
 
 # plot the first figure before smoothing
 fig = plt.figure()
