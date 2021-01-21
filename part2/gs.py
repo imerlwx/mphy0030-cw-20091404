@@ -14,14 +14,15 @@ class RBFSpline():
         n = p.shape[0]  # number of source points in each dimension  
         W = np.identity(n) # matrix for landmark localization errors
         K = np.zeros((n, n)) # initial kernel value of source points
-        alpha = np.zeros((n,3)) # initialize alpha
 
         # compute the kernel value K
         K = self.kernel_gaussian(p, p, sigma) 
         
-        # use the leaner least square algorithm to compute alpha
-        for i in range(3):
-            alpha[:, 0] = np.linalg.lstsq(K + lambda1 @ W, q[:, i], rcond = None)
+        # use the linear least square algorithm to compute alpha
+        a,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 0].reshape(-1, 1), rcond = None)
+        b,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 1].reshape(-1, 1), rcond = None)
+        c,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 2].reshape(-1, 1), rcond = None)
+        alpha = np.hstack((a, b, c))
         
         return alpha
 

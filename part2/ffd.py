@@ -6,6 +6,7 @@ class Image3D():
     
     def __init__(self, data):
         
+        self.intensity = data['vol']
         self.vox_dimension = data['voxdims']
         self.image_size = np.shape(data['vol'])
         self.data_type = data['voxdims'].dtype
@@ -23,8 +24,9 @@ class FreeFormDeformation():
         self.dy = (max_y - min_y) / Ny
         self.dz = (max_z - min_z) / Nz
        
-        self.x_lattice, self.y_lattice, self.z_lattice = np.mgrid[min_x:max_x:Nx, min_y:max_y:Ny, min_z:max_z:Nz]
-        self.x = self.x_lattice.reshape(self.points_num, 1)
+        # construct the control points lattice
+        self.x_lattice, self.y_lattice, self.z_lattice = np.mgrid[min_x:max_x:self.dx, min_y:max_y:self.dy, min_z:max_z:self.dz]
+        self.x = self.x_lattice.reshape(self.points_num, 1) # reshape the lattice to get the coordinate of each control point
         self.y = self.y_lattice.reshape(self.points_num, 1)
         self.z = self.z_lattice.reshape(self.points_num, 1)
 
@@ -46,19 +48,38 @@ class FreeFormDeformation():
         return transformed_control_points
 
     # define a function to compute a warped 3D image
-    def warp_image(self, Image3D, RBFSpline):
+    def warp_image(self, Image3D, RBFSpline, randomness, lambda1, sigma):
 
         voxdims = Image3D.vox_dimension
         shape = Image3D.image_size
         
         # compute the coordinates of query points
-        x_max = voxdims[0] * shape[0]
-        y_max = voxdims[1] * shape[1]
-        z_max = voxdims[2] * shape[2]
+        x_max = voxdims[:, 0] * shape[0]
+        y_max = voxdims[:, 1] * shape[1]
+        z_max = voxdims[:, 2] * shape[2]
 
-        query_x_lattice, query_y_lattice, query_z_lattice = np.mgrid[0:x_max:voxdims[0], 0:y_max:voxdims[1], 0:z_max:voxdims[2]]
+        query_x_lattice, query_y_lattice, query_z_lattice = np.mgrid[0:x_max:voxdims[:, 0], 0:y_max:voxdims[:, 1], 0:z_max:voxdims[:, 2]]
         query_x = query_x_lattice.reshape(shape[0] * shape[1] * shape[2], 1)
         query_y = query_y_lattice.reshape(shape[0] * shape[1] * shape[2], 1)
         query_z = query_z_lattice.reshape(shape[0] * shape[1] * shape[2], 1)
 
         query_points = np.hstack((query_x, query_y, query_z))
+
+        transformed_control_points = self.random_transform_generator(randomness) # first compute transformed control points
+
+        alpha = RBFSpline.fit(self.control_points, transformed_control_points, lambda1, sigma) # then fit alpha
+
+        transformed_query_points = RBFSpline.evaluate(query_points, self.control_points, alpha, sigma) # lastly evalute query points
+
+        transformed_x_lattice = transformed_query_points[:, 0].reshape(shape[0], shape[1], shape[2])
+        transformed_y_lattice = transformed_query_points[:, 1].reshape(shape[0], shape[1], shape[2])
+        transformed_z_lattice = transformed_query_points[:, 2].reshape(shape[0], shape[1], shape[2])
+
+        return transformed_x_lattice, transformed_y_lattice, transformed_z_lattice
+
+    ## define a function to output randomly warped 3D images
+    def random_transform(self, Image3D, RBFSpline, randomness, sigma, lambda1):
+
+        transformed_x_lattice, transformed_y_lattice, transformed_z_lattice = self.warp_image(Image3D, RBFSpline, randomness, lambda1, sigma)
+
+        
