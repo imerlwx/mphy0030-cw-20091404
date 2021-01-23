@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.interpolate import interpn
+from matplotlib import pyplot as plt
 from gs import RBFSpline
 
 ## define a class to store different characteristics of 3D images
@@ -75,11 +77,34 @@ class FreeFormDeformation():
         transformed_y_lattice = transformed_query_points[:, 1].reshape(shape[0], shape[1], shape[2])
         transformed_z_lattice = transformed_query_points[:, 2].reshape(shape[0], shape[1], shape[2])
 
-        return transformed_x_lattice, transformed_y_lattice, transformed_z_lattice
+        return query_x_lattice, query_y_lattice, query_z_lattice, transformed_x_lattice, transformed_y_lattice, transformed_z_lattice
 
     ## define a function to output randomly warped 3D images
-    def random_transform(self, Image3D, RBFSpline, randomness, sigma, lambda1):
+    def random_transform(self, Image3D, RBFSpline, randomness, sigma, lambda1, z):
 
-        transformed_x_lattice, transformed_y_lattice, transformed_z_lattice = self.warp_image(Image3D, RBFSpline, randomness, lambda1, sigma)
+        query_x_lattice, query_y_lattice, _, transformed_x_lattice, transformed_y_lattice, _ = self.warp_image(Image3D, RBFSpline, randomness, lambda1, sigma)
 
-        
+        # get the points set from original image
+        points_i = query_x_lattice[:, :, z]
+        points_j = query_y_lattice[:, :, z]
+        points = np.concatenate((points_i.reshape(-1,1), points_j.reshape(-1,1)), axis=1)
+
+        values = Image3D.intensity[:, :, z] # get the value of original image
+
+        # get the points set from transformed image
+        transformed_points_i = transformed_x_lattice[:, :, z]
+        transformed_points_j = transformed_y_lattice[:, :, z]
+        transformed_points = np.concatenate((transformed_points_i.reshape(-1,1), transformed_points_j.reshape(-1,1)), axis=1)
+
+        # get the warped image
+        image_interpn_flatten = interpn(points, values, transformed_points)
+        image_interpn = image_interpn_flatten.reshape(Image3D.image_size[0], Image3D.image_size[1])
+
+        # show the result
+        ax = plt.subplots(1, 2)
+        ax[0].imshow(Image3D.intensity[:, :, z], cmap='gray',origin='lower', vmin=0, vmax=1)
+        ax[1].imshow(image_interpn, cmap='gray',origin='lower', vmin=0, vmax=1)
+        ax[0].title.set_text('Original')
+        ax[1].title.set_text('Transformed')
+
+        plt.show()
