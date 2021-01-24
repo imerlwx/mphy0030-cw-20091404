@@ -32,13 +32,15 @@ class RBFSpline():
         m = query_points.shape[0] # number of query points in each dimension
         n = control_points.shape[0] # number of control points in each dimension
         K = np.zeros((m, n)) # initial kernel value between query points and control points
-        transformed_query_points = np.zeros((m, 3)) # initial query points after transformation
+        transformation = np.zeros((m, 3)) # initial transformation
         
         # compute kernel values between query points and control points
         K = self.kernel_gaussian(query_points, control_points, sigma) 
         
         for i in range(3):
-            transformed_query_points[:, i] = K @ alpha[:, i]
+            transformation[:, i] = K @ alpha[:, i]
+            
+        transformed_query_points = transformation + query_points
 
         return transformed_query_points
 

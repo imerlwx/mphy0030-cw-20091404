@@ -77,33 +77,33 @@ class FreeFormDeformation():
         transformed_y_lattice = transformed_query_points[:, 1].reshape(shape[0], shape[1], shape[2])
         transformed_z_lattice = transformed_query_points[:, 2].reshape(shape[0], shape[1], shape[2])
 
-        return query_x_lattice, query_y_lattice, query_z_lattice, transformed_x_lattice, transformed_y_lattice, transformed_z_lattice
+        return transformed_x_lattice, transformed_y_lattice, transformed_z_lattice
 
     ## define a function to output randomly warped 3D images
     def random_transform(self, Image3D, RBFSpline, randomness, sigma, lambda1, z):
 
-        query_x_lattice, query_y_lattice, _, transformed_x_lattice, transformed_y_lattice, _ = self.warp_image(Image3D, RBFSpline, randomness, lambda1, sigma)
+        transformed_x_lattice, transformed_y_lattice, _ = self.warp_image(Image3D, RBFSpline, randomness, lambda1, sigma)
 
         # get the points set from original image
-        points_i = query_x_lattice[:, :, z]
-        points_j = query_y_lattice[:, :, z]
-        points = np.concatenate((points_i.reshape(-1,1), points_j.reshape(-1,1)), axis=1)
+        points_i = np.arange(0, Image3D.intensity.shape[0]) * Image3D.vox_dimension[:, 0]
+        points_j = np.arange(0, Image3D.intensity.shape[1]) * Image3D.vox_dimension[:, 1]
+        points = (points_i, points_j)
 
         values = Image3D.intensity[:, :, z] # get the value of original image
 
         # get the points set from transformed image
         transformed_points_i = transformed_x_lattice[:, :, z]
         transformed_points_j = transformed_y_lattice[:, :, z]
-        transformed_points = np.concatenate((transformed_points_i.reshape(-1,1), transformed_points_j.reshape(-1,1)), axis=1)
+        transformed_points = np.concatenate((transformed_points_i.reshape(-1, 1), transformed_points_j.reshape(-1, 1)), axis=1)
 
         # get the warped image
-        image_interpn_flatten = interpn(points, values, transformed_points)
+        image_interpn_flatten = interpn(points, values, transformed_points, bounds_error=False)
         image_interpn = image_interpn_flatten.reshape(Image3D.image_size[0], Image3D.image_size[1])
 
         # show the result
-        ax = plt.subplots(1, 2)
-        ax[0].imshow(Image3D.intensity[:, :, z], cmap='gray',origin='lower', vmin=0, vmax=1)
-        ax[1].imshow(image_interpn, cmap='gray',origin='lower', vmin=0, vmax=1)
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(Image3D.intensity[:, :, z], cmap='gray')
+        ax[1].imshow(image_interpn, cmap='gray')
         ax[0].title.set_text('Original')
         ax[1].title.set_text('Transformed')
 
