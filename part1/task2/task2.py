@@ -6,38 +6,57 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import griddata
 
 ## define a function to output the probability densities 
-def bi_gaussian_pdf(x, miu, sigma):
+def gaussian_pdf(x, miu, sigma):
     
     p_intial = (np.exp(((x - miu).transpose()) @ (np.linalg.inv(sigma)) @ 
-        (x - miu) / (-2))) / (2 * math.pi * math.sqrt(np.linalg.det(sigma)))
+        (x - miu) / (-2))) / (((2 * math.pi) ** 1.5) * math.sqrt(np.linalg.det(sigma)))
 
     p = np.diagonal(p_intial)
 
     return p
 
-x = np.random.rand(2, 10000) # set a random x
-miu = np.mean(x, axis=1).reshape(2, 1) # compute the average of x in each row
+x = np.random.rand(3, 10000) # set a random x
+miu = np.mean(x, axis=1).reshape(3, 1) # compute the average of x in each row
 sigma = np.cov(x) # compute the covariance matrix
 
-p = bi_gaussian_pdf(x, miu, sigma)
+p = gaussian_pdf(x, miu, sigma)
 
-## draw a 3D triangular surface of p
-fig = plt.figure()
+def plot_ellipoid(x, p, percentiles, fig, ax):
 
-ax = Axes3D(fig) 
-surf = ax.plot_trisurf(x[0], x[1], p, cmap = cm.coolwarm, alpha = 0.5)
-fig.colorbar(surf, shrink=0.5, aspect=5)
-plt.title("Bivariate Gaussian Probability Density Surface")
+    min_p = percentiles * np.max(p) - 0.01
+    max_p = percentiles * np.max(p) + 0.01
+
+    m = np.where((p >= min_p) & (p < max_p))
+    n = np.array(m)
+    xi = np.zeros((n.shape[1], 3))
+
+    i = 0
+    while i < n.shape[1]:
+        xi[i] = x[:, n[:, i]].T
+        i += 1 
+
+    a = (np.max(xi[:, 0]) - np.min(xi[:, 0])) / 2
+    b = (np.max(xi[:, 1]) - np.min(xi[:, 1])) / 2
+    c = (np.max(xi[:, 2]) - np.min(xi[:, 2])) / 2
+
+    a1 = (np.max(xi[:, 0]) + np.min(xi[:, 0])) / 2
+    b1 = (np.max(xi[:, 1]) + np.min(xi[:, 1])) / 2
+    c1 = (np.max(xi[:, 2]) + np.min(xi[:, 2])) / 2
+
+    
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 100)
+    x = a * np.outer(np.cos(u), np.sin(v)) + a1
+    y = b * np.outer(np.sin(u), np.sin(v)) + b1
+    z = c * np.outer(np.ones(np.size(u)), np.cos(v)) + c1
+
+    ax.plot_surface(x, y, z, color='b',cmap=cm.coolwarm)
+
 
 ## draw the three ellipsoid surface 
 fig = plt.figure()
-
-# redefine x, y, z grids by using interpolation
-grid_x,grid_y = np.mgrid[np.min(x[0]):np.max(x[0]):0.001, np.min(x[1]):np.max(x[1]):0.001]
-grid_z = griddata(x.transpose(), p.transpose(), (grid_x, grid_y), method='nearest')
-a = np.max(p) # compute the maxmium of p to compute pencentiles
-cs = plt.contour(grid_x, grid_y ,grid_z, [0.1 * a, 0.5 * a, 0.9 * a], alpha = 0.75, cmap = cm.jet)
-plt.colorbar()
+ax = fig.subplots(111, projection='3d')
+plot_ellipoid(x, p, 0.5, fig, ax)
 plt.title("10th, 50th, 90th percentiles of the probability densities")
 
 plt.show()
