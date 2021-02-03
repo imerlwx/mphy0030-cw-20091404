@@ -76,4 +76,5 @@ ax2 = fig.add_subplot(133)
 ax2.imshow(intensity[:, :, 25], cmap = plt.cm.gray)
 plt.title('z = 25')
 
-plt.show()
+#plt.show()
+plt.savefig('task1.png')
