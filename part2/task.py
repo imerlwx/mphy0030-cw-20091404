@@ -90,22 +90,44 @@ class FreeFormDeformation():
 
         self.control_points = np.hstack((self.x, self.y, self.z))
 
-    
+    @classmethod
+    def opcons(cls, Image3D, Nx, Ny, Nz):
+        
+        points_num = Nx * Ny * Nz
+        max_x = Image3D.image_size[0] * Image3D.vox_dimension[:, 0]
+        max_y = Image3D.image_size[1] * Image3D.vox_dimension[:, 1]
+        max_z = Image3D.image_size[2] * Image3D.vox_dimension[:, 2]
+
+        dx = max_x / Nx
+        dy = max_y / Ny
+        dz = max_z / Nz
+
+        x_lattice, y_lattice, z_lattice = np.mgrid[0:max_x:dx, 0:max_y:dy, 0:max_z:dz]
+
+        # reshape the lattice to get the coordinate of each control point
+        x = x_lattice.reshape(points_num, 1) 
+        y = y_lattice.reshape(points_num, 1)
+        z = z_lattice.reshape(points_num, 1)
+
+        b = np.hstack((x, y, z))
+        control_points = cls(b)
+        
+        return control_points
 
     # define a function to compute the 
     def random_transform_generator(self, randomness):
 
         # define an affine transformation matrix
         Maff = np.eye(4)
-        Maff[0,0] = 1 + 0.05 * np.random.randn(1) * randomness
-        Maff[0,1] = 0.05 * np.random.randn(1) * randomness
-        Maff[0,2] = 0.05 * np.random.randn(1) * randomness
-        Maff[1,0] = 0.05 * np.random.randn(1) * randomness
-        Maff[1,1] = 1 + 0.05 * np.random.randn(1) * randomness
-        Maff[1,2] = 0.05 * np.random.randn(1) * randomness
-        Maff[2,0] = 0.05 * np.random.randn(1) * randomness
-        Maff[2,1] = 0.05 * np.random.randn(1) * randomness
-        Maff[2,2] = 1 * randomness
+        Maff[0,0] = 1 + 0.1 * np.random.randn(1) * randomness
+        Maff[0,1] = 0.1 * np.random.randn(1) * randomness
+        Maff[0,2] = 0.1 * np.random.randn(1) * randomness
+        Maff[1,0] = 0.1 * np.random.randn(1) * randomness
+        Maff[1,1] = 1 + 0.1 * np.random.randn(1) * randomness
+        Maff[1,2] = 0.1 * np.random.randn(1) * randomness
+        Maff[2,0] = 0.1 * np.random.randn(1) * randomness
+        Maff[2,1] = 0.1 * np.random.randn(1) * randomness
+        Maff[2,2] = 1
         Maff[0,3] = 10 * np.random.randn(1) * randomness
         Maff[1,3] = 10 * np.random.randn(1) * randomness
 
@@ -183,7 +205,7 @@ data = scio.loadmat(dataFile)
 image = Image3D(data)
 gs_spline = RBFSpline()
 
-randomness = 0.5
+randomness = 1
 sigma = 100
 lambda1 = 0.01
 z = [5, 10, 15, 20, 25]
