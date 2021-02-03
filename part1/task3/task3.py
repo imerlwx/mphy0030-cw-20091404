@@ -28,7 +28,7 @@ def gradient_descent(a, x):
     tolerance = 0.0001
     dx = 0.1
 
-    n = 1 # intial iteration number
+    n = 1 # initial iteration number
     f = np.zeros((iteration_num, 1)) # set up intial f
     f[0] = quadratic_polynomial(a, x)
 
@@ -68,4 +68,5 @@ plt.title("Change of f after n iterations")
 plt.xlabel("iterations")
 plt.ylabel("quadratic polynomial value")
 plt.plot(m, f[0:n, 0])
-plt.show()
+#plt.show()
+plt.savefig('task3.png')
