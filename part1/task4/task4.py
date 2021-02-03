@@ -29,8 +29,8 @@ def low_pass_smoothing(vertices, iterations, lambda1, mu):
 
     return vertices
 
-vertices_intial = np.genfromtxt('./data/example_vertices.csv',delimiter=',')
-triangles = np.genfromtxt('./data/example_triangles.csv',delimiter=',') - 1
+vertices_intial = np.genfromtxt('../data/example_vertices.csv',delimiter=',')
+triangles = np.genfromtxt('../data/example_triangles.csv',delimiter=',') - 1
 
 # set up parameters
 lambda1 = 0.9
