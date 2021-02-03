@@ -9,7 +9,7 @@ def simple_image_write(data):
     [intensity, vox_dimension] = [data['vol'], data['voxdims']] # read information from data
     
     # open a new file to write in binary format
-    with open('./data/image.sim', 'wb+') as fw:
+    with open('../data/image.sim', 'wb+') as fw:
         
         # store the image size to the header of file
         image_size = struct.pack('i', np.size(intensity))
@@ -55,12 +55,12 @@ def simple_image_read(file_name, a, b):
     return intensity, vox_dimension
 
 # get data from a mat file
-dataFile = './data/example_image.mat'
+dataFile = '../data/example_image.mat'
 data = scio.loadmat(dataFile)
 
 # write and read the binary file
 a, b = simple_image_write(data)
-intensity, vox_dimension = simple_image_read('./data/image.sim', a, b)    
+intensity, vox_dimension = simple_image_read('../data/image.sim', a, b)    
 
 # plot three images at different z-coodinates
 fig = plt.figure()
