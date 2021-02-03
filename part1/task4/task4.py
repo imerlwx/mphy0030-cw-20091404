@@ -14,7 +14,7 @@ def low_pass_smoothing(vertices, iterations, lambda1, mu):
             vertices_tree = kdtree(vertices)
             _, idx = vertices_tree.query(vertices[i], k = 7)
             
-            q = np.zeros((1, 3)) # set the intial sum of nearest points
+            q = np.zeros((1, 3)) # set the initial sum of nearest points
             m = len(idx) # number of nearest points (actually minus 1 because this including the point itself)
         
             for j in range(m):
@@ -60,4 +60,5 @@ vertices = low_pass_smoothing(vertices_intial, 25, lambda1, mu)
 ax.plot_trisurf(vertices[:,0], vertices[:,1], vertices[:,2], triangles = triangles, color='r')
 plt.title('after 25 iterations filtering')
 
-plt.show()
+#plt.show()
+plt.savefig('task4.png')
