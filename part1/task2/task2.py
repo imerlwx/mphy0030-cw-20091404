@@ -71,4 +71,5 @@ ax = fig.add_subplot(133, projection='3d')
 plot_ellipoid(x, p, 0.9, ax)
 plt.title("90th percentiles")
 
-plt.show()
+#plt.show()
+plt.savefig('task2.png')
