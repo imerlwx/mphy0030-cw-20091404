@@ -39,13 +39,23 @@ class FreeFormDeformation():
     # define a function to compute the 
     def random_transform_generator(self, randomness):
 
-        # a random displacement with constraint 
-        displacement_x = randomness * (2 * np.random.rand(self.points_num, 1) - 1) * self.dx / 2
-        displacement_y = randomness * (2 * np.random.rand(self.points_num, 1) - 1) * self.dy / 2
-        displacement_z = randomness * (2 * np.random.rand(self.points_num, 1) - 1) * self.dz / 2
-        displacement = np.hstack((displacement_x, displacement_y, displacement_z))
-        
-        transformed_control_points = self.control_points + displacement
+        # define an affine transformation matrix
+        Maff = np.eye(4)
+        Maff[0,0] = 1 + 0.05 * np.random.randn(1) * randomness
+        Maff[0,1] = 0.05 * np.random.randn(1) * randomness
+        Maff[0,2] = 0.05 * np.random.randn(1) * randomness
+        Maff[1,0] = 0.05 * np.random.randn(1) * randomness
+        Maff[1,1] = 1 + 0.05 * np.random.randn(1) * randomness
+        Maff[1,2] = 0.05 * np.random.randn(1) * randomness
+        Maff[2,0] = 0.05 * np.random.randn(1) * randomness
+        Maff[2,1] = 0.05 * np.random.randn(1) * randomness
+        Maff[2,2] = 1 * randomness
+        Maff[0,3] = 10 * np.random.randn(1) * randomness
+        Maff[1,3] = 10 * np.random.randn(1) * randomness
+
+        # calculate the transformed control points
+        transformation = Maff @ np.concatenate((self.control_points, np.ones((self.control_points.shape[0], 1))), axis=1).T
+        transformed_control_points = transformation[0:3,:].T
 
         return transformed_control_points
 
@@ -97,14 +107,7 @@ class FreeFormDeformation():
         transformed_points = np.concatenate((transformed_points_i.reshape(-1, 1), transformed_points_j.reshape(-1, 1)), axis=1)
 
         # get the warped image
-        image_interpn_flatten = interpn(points, values, transformed_points, bounds_error=False)
+        image_interpn_flatten = interpn(points, values, transformed_points, bounds_error=False, fill_value=0)
         image_interpn = image_interpn_flatten.reshape(Image3D.image_size[0], Image3D.image_size[1])
 
-        # show the result
-        fig, ax = plt.subplots(1, 2)
-        ax[0].imshow(Image3D.intensity[:, :, z], cmap='gray')
-        ax[1].imshow(image_interpn, cmap='gray')
-        ax[0].title.set_text('Original')
-        ax[1].title.set_text('Transformed')
-
-        plt.show()
+        return image_interpn

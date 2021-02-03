@@ -1,5 +1,4 @@
 ## class file for Gaussian spline
-
 import numpy as np
 
 
@@ -19,10 +18,12 @@ class RBFSpline():
         K = self.kernel_gaussian(p, p, sigma) 
         
         # use the linear least square algorithm to compute alpha
-        a,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 0].reshape(-1, 1), rcond = None)
-        b,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 1].reshape(-1, 1), rcond = None)
-        c,_,_,_ = np.linalg.lstsq(K + lambda1 * W, q[:, 2].reshape(-1, 1), rcond = None)
-        alpha = np.hstack((a, b, c))
+        A = K + lambda1 * W
+        U, S, VT = np.linalg.svd(A)
+        a = np.linalg.inv(np.diag(S) @ VT) @ (U.T) @ q[:, 0]
+        b = np.linalg.inv(np.diag(S) @ VT) @ (U.T) @ q[:, 1]
+        c = np.linalg.inv(np.diag(S) @ VT) @ (U.T) @ q[:, 2]
+        alpha = np.hstack((a.reshape(-1, 1), b.reshape(-1, 1), c.reshape(-1, 1)))
         
         return alpha
 
@@ -37,10 +38,11 @@ class RBFSpline():
         # compute kernel values between query points and control points
         K = self.kernel_gaussian(query_points, control_points, sigma) 
         
+        # compute the transformed query points
         for i in range(3):
             transformation[:, i] = K @ alpha[:, i]
             
-        transformed_query_points = transformation + query_points
+        transformed_query_points = transformation
 
         return transformed_query_points
 
