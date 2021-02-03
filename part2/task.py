@@ -73,26 +73,38 @@ class Image3D():
 ## define a class to implement the free form deformation
 class FreeFormDeformation():
 
+    # we will define two class constructors
+    def __init__(self, c):
+        self.control_points = c
+    
     # precompute the coordinates of all the control points
-    def __init__(self, Nx, Ny, Nz, min_x, max_x, min_y, max_y, min_z, max_z):
+    @classmethod
+    def opcons1(cls, Nx, Ny, Nz, min_x, max_x, min_y, max_y, min_z, max_z):
         
-        # compute the x, y, z coordinates of control points
-        self.points_num = Nx * Ny * Nz
-        self.dx = (max_x - min_x) / Nx
-        self.dy = (max_y - min_y) / Ny
-        self.dz = (max_z - min_z) / Nz
+        # compute the x, y, z spacing of control points
+        points_num = Nx * Ny * Nz
+        dx = (max_x - min_x) / Nx
+        dy = (max_y - min_y) / Ny
+        dz = (max_z - min_z) / Nz
        
         # construct the control points lattice
-        self.x_lattice, self.y_lattice, self.z_lattice = np.mgrid[min_x:max_x:self.dx, min_y:max_y:self.dy, min_z:max_z:self.dz]
-        self.x = self.x_lattice.reshape(self.points_num, 1) # reshape the lattice to get the coordinate of each control point
-        self.y = self.y_lattice.reshape(self.points_num, 1)
-        self.z = self.z_lattice.reshape(self.points_num, 1)
+        x_lattice, y_lattice, z_lattice = np.mgrid[min_x:max_x:dx, min_y:max_y:dy, min_z:max_z:dz]
 
-        self.control_points = np.hstack((self.x, self.y, self.z))
+        # reshape the lattice to get the coordinate of each control point
+        x = x_lattice.reshape(points_num, 1) 
+        y = y_lattice.reshape(points_num, 1)
+        z = z_lattice.reshape(points_num, 1)
+
+        # merge the coordinates to get a n * 3 matrix
+        b = np.hstack((x, y, z))
+        control_points = cls(b)
+
+        return control_points
 
     @classmethod
-    def opcons(cls, Image3D, Nx, Ny, Nz):
+    def opcons2(cls, Image3D, Nx, Ny, Nz):
         
+        # compute the x, y, z spacing of control points
         points_num = Nx * Ny * Nz
         max_x = Image3D.image_size[0] * Image3D.vox_dimension[:, 0]
         max_y = Image3D.image_size[1] * Image3D.vox_dimension[:, 1]
@@ -102,6 +114,7 @@ class FreeFormDeformation():
         dy = max_y / Ny
         dz = max_z / Nz
 
+        # construct the control points lattice
         x_lattice, y_lattice, z_lattice = np.mgrid[0:max_x:dx, 0:max_y:dy, 0:max_z:dz]
 
         # reshape the lattice to get the coordinate of each control point
@@ -109,6 +122,7 @@ class FreeFormDeformation():
         y = y_lattice.reshape(points_num, 1)
         z = z_lattice.reshape(points_num, 1)
 
+        # merge the coordinates to get a n * 3 matrix
         b = np.hstack((x, y, z))
         control_points = cls(b)
         
@@ -196,7 +210,8 @@ class FreeFormDeformation():
             ax[i].imshow(image_interpn, cmap='gray')
             ax[i].title.set_text(f"z = {z[i]}")
             
-        plt.show()
+        #plt.show()
+        plt.savefig('part2.png')
 
 # get data from a mat file
 dataFile = '../data/example_image.mat'
@@ -211,7 +226,8 @@ lambda1 = 0.01
 z = [5, 10, 15, 20, 25]
 
 # max should be less than voxdim * vox shape
-a = FreeFormDeformation(4, 4, 4, 0, 200, 0, 200, 10, 90)
+a = FreeFormDeformation.opcons1(4, 4, 4, 0, 200, 0, 200, 10, 90)
+#a = FreeFormDeformation.opcons2(image, 4, 4, 4)
 
 a.random_transform(image, gs_spline, randomness, sigma, lambda1, z)
 
